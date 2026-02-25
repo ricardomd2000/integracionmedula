@@ -2,12 +2,12 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA8oBlX8FWgQkvVS09yWVJpYaPqHwsEwFM",
-  authDomain: "medulaespinal-app.firebaseapp.com",
-  projectId: "medulaespinal-app",
-  storageBucket: "medulaespinal-app.firebasestorage.app",
-  messagingSenderId: "991529262290",
-  appId: "1:991529262290:web:1ccf9223ec8ff421e4a10b"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
