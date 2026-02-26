@@ -40,11 +40,18 @@ function Dashboard() {
     };
 
     const calculateTotalGrade = (grades) => {
-        if (!grades) return '0.0';
+        if (!grades) return '2.5';
         const totalPoints = (grades.level1 || 0) + (grades.level2 || 0) + (grades.level3 || 0) + (grades.level4 || 0) + (grades.authenticity || 0);
         const maxPoints = 15; // 4 levels + 1 authenticity criterion * 3 points each
-        const finalGrade = (totalPoints / maxPoints) * 5.0;
+        const finalGrade = 2.5 + ((totalPoints / maxPoints) * 2.5);
         return finalGrade.toFixed(1);
+    };
+
+    const handleReviewCompletion = async (sessionId, isComplete) => {
+        const sessionRef = doc(db, 'sessions', sessionId);
+        await updateDoc(sessionRef, {
+            teacherReviewed: isComplete
+        });
     };
 
     // Textos descriptivos para la rúbrica de cada nivel basados en la guía
@@ -119,6 +126,7 @@ function Dashboard() {
                                             <select
                                                 value={session.grades?.[`level${levelNum}`] ?? ''}
                                                 onChange={(e) => handleGradeChange(session.id, `level${levelNum}`, e.target.value)}
+                                                disabled={session.teacherReviewed}
                                             >
                                                 <option value="" disabled>Seleccione puntaje basado en los objetivos</option>
                                                 {rubricDescriptions[`level${levelNum}`].map(option => (
@@ -137,6 +145,7 @@ function Dashboard() {
                                         <select
                                             value={session.grades?.authenticity ?? ''}
                                             onChange={(e) => handleGradeChange(session.id, 'authenticity', e.target.value)}
+                                            disabled={session.teacherReviewed}
                                         >
                                             <option value="" disabled>Evaluar autenticidad del lenguaje</option>
                                             {rubricDescriptions.authenticity.map(option => (
@@ -156,7 +165,29 @@ function Dashboard() {
                                         placeholder="Escribe comentarios o feedback para el grupo..."
                                         value={session.feedback || ''}
                                         onChange={(e) => handleFeedbackChange(session.id, e.target.value)}
+                                        disabled={session.teacherReviewed}
                                     />
+
+                                    <div className="review-controls">
+                                        {!session.teacherReviewed ? (
+                                            <button
+                                                className="btn-success btn-review"
+                                                onClick={() => handleReviewCompletion(session.id, true)}
+                                            >
+                                                Finalizar Revisión
+                                            </button>
+                                        ) : (
+                                            <button
+                                                className="btn-secondary btn-reopen"
+                                                onClick={() => handleReviewCompletion(session.id, false)}
+                                            >
+                                                Reabrir Calificación
+                                            </button>
+                                        )}
+                                        {session.teacherReviewed && (
+                                            <span className="reviewed-badge">✔️ Revisión Terminada</span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}
