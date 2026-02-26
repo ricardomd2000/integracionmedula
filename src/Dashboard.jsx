@@ -41,10 +41,44 @@ function Dashboard() {
 
     const calculateTotalGrade = (grades) => {
         if (!grades) return '0.0';
-        const totalPoints = (grades.level1 || 0) + (grades.level2 || 0) + (grades.level3 || 0) + (grades.level4 || 0);
-        const maxPoints = 12; // 4 levels * 3 points each
+        const totalPoints = (grades.level1 || 0) + (grades.level2 || 0) + (grades.level3 || 0) + (grades.level4 || 0) + (grades.authenticity || 0);
+        const maxPoints = 15; // 4 levels + 1 authenticity criterion * 3 points each
         const finalGrade = (totalPoints / maxPoints) * 5.0;
         return finalGrade.toFixed(1);
+    };
+
+    // Textos descriptivos para la rúbrica de cada nivel basados en la guía
+    const rubricDescriptions = {
+        level1: [
+            { value: "0", label: "0 Puntos - No identifica huesos/ligamentos ni mecanismo de lesión." },
+            { value: "1", label: "1 Punto - Identifica parcialmente huesos o el mecanismo." },
+            { value: "2", label: "2 Puntos - Identifica huesos/ligamentos y mecanismo con imprecisiones." },
+            { value: "3", label: "3 Puntos - Excelente, describe correctamente estructuras osteoarticulares y mecanismo exacto." }
+        ],
+        level2: [
+            { value: "0", label: "0 Puntos - No relaciona la lesión con el canal ni identifica daños meníngeos." },
+            { value: "1", label: "1 Punto - Relaciona vagamente la lesión ósea o menciona meninges aisladas." },
+            { value: "2", label: "2 Puntos - Relaciona lesión con el canal, falla en detalles meníngeos/vasculares." },
+            { value: "3", label: "3 Puntos - Excelente, caracteriza relación vértebra-médula e identifica daño meníngeo." }
+        ],
+        level3: [
+            { value: "0", label: "0 Puntos - No reconoce vías medulares o astas afectadas." },
+            { value: "1", label: "1 Punto - Menciona tractos o astas de forma incorrecta para su nivel." },
+            { value: "2", label: "2 Puntos - Reconoce vías/astas dañadas, pero omite organización anatómica." },
+            { value: "3", label: "3 Puntos - Excelente, identifica precisión de sustancia gris/blanca, cordones y fascículos dañados." }
+        ],
+        level4: [
+            { value: "0", label: "0 Puntos - No explica sintomatología o no correlaciona con anatomía." },
+            { value: "1", label: "1 Punto - Menciona síntomas genéricos sin lateralidad correcta." },
+            { value: "2", label: "2 Puntos - Explica sintomatología con lateralidad, justificación anatómica débil." },
+            { value: "3", label: "3 Puntos - Excelente, integración perfecta (termoanalgésica/motora/epicrítica ipsi/contra)." }
+        ],
+        authenticity: [
+            { value: "0", label: "0 Puntos - Evidencia clara de uso de IA o copia externa sin lenguaje propio." },
+            { value: "1", label: "1 Punto - Lenguaje mayormente externo con mínima adaptación propia." },
+            { value: "2", label: "2 Puntos - Lenguaje propio adecuado, alguna estructura artificial." },
+            { value: "3", label: "3 Puntos - Excelente, lenguaje auténtico, claro y propio del estudiante." }
+        ]
     };
 
     return (
@@ -80,21 +114,37 @@ function Dashboard() {
                                     <div key={levelNum} className="response-group">
                                         <h4>Nivel {levelNum}:</h4>
                                         <p>{session.responses?.[`level${levelNum}`] || <span className="empty">Sin respuesta...</span>}</p>
-                                        <div className="rubric-control">
+                                        <div className="rubric-control detailed-rubric">
                                             <label>Calificación (0-3): </label>
-                                            <select 
-                                                value={session.grades?.[`level${levelNum}`] ?? ''} 
+                                            <select
+                                                value={session.grades?.[`level${levelNum}`] ?? ''}
                                                 onChange={(e) => handleGradeChange(session.id, `level${levelNum}`, e.target.value)}
                                             >
-                                                <option value="" disabled>Seleccione puntaje</option>
-                                                <option value="0">0 Puntos - Insuficiente</option>
-                                                <option value="1">1 Punto - Regular</option>
-                                                <option value="2">2 Puntos - Bueno</option>
-                                                <option value="3">3 Puntos - Excelente</option>
+                                                <option value="" disabled>Seleccione puntaje basado en los objetivos</option>
+                                                {rubricDescriptions[`level${levelNum}`].map(option => (
+                                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                                ))}
                                             </select>
                                         </div>
                                     </div>
                                 ))}
+
+                                <div className="response-group authenticity-group">
+                                    <h4>Criterio de Probidad Académica</h4>
+                                    <p className="authenticity-desc">Evalúa si el texto presenta originalidad, apropiación de la guía de estudio y ausencia del uso injustificado de herramientas de inteligencia artificial.</p>
+                                    <div className="rubric-control detailed-rubric">
+                                        <label>Lenguaje Propio (0-3): </label>
+                                        <select
+                                            value={session.grades?.authenticity ?? ''}
+                                            onChange={(e) => handleGradeChange(session.id, 'authenticity', e.target.value)}
+                                        >
+                                            <option value="" disabled>Evaluar autenticidad del lenguaje</option>
+                                            {rubricDescriptions.authenticity.map(option => (
+                                                <option key={option.value} value={option.value}>{option.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
 
                                 <hr />
                                 <div className="feedback-section">
@@ -102,8 +152,8 @@ function Dashboard() {
                                         <h3>Nota Final: {calculateTotalGrade(session.grades)} / 5.0</h3>
                                     </div>
                                     <h4>Comentarios y Realimentación (Opcional):</h4>
-                                    <textarea 
-                                        placeholder="Escribe comentarios o feedback para el grupo..." 
+                                    <textarea
+                                        placeholder="Escribe comentarios o feedback para el grupo..."
                                         value={session.feedback || ''}
                                         onChange={(e) => handleFeedbackChange(session.id, e.target.value)}
                                     />

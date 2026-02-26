@@ -408,7 +408,30 @@ textarea:disabled {
   outline: none;
   transition: border-color 0.2s;
   flex: 1;
-  max-width: 300px;
+  max-width: 100%;
+}
+
+.detailed-rubric select {
+  font-size: 0.9rem;
+  background-color: #fafdff;
+}
+
+.authenticity-group {
+  margin-top: 2rem;
+  background-color: #fffdf5;
+  padding: 1rem;
+  border: 1px solid #ffe0b2;
+  border-radius: 8px;
+  border-left: 4px solid #ff9800;
+}
+
+.authenticity-desc {
+  font-size: 0.9rem !important;
+  color: #666 !important;
+  font-style: italic;
+  margin-bottom: 1rem !important;
+  background: transparent !important;
+  padding: 0 !important;
 }
 
 .rubric-control select:focus {
