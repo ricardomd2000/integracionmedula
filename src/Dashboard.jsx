@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from './firebase';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, updateDoc } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import './App.css';
 
@@ -23,6 +23,28 @@ function Dashboard() {
     const toggleGroup = (groupId) => {
         if (expandedGroup === groupId) setExpandedGroup(null);
         else setExpandedGroup(groupId);
+    };
+
+    const handleGradeChange = async (sessionId, level, value) => {
+        const sessionRef = doc(db, 'sessions', sessionId);
+        await updateDoc(sessionRef, {
+            [`grades.${level}`]: parseInt(value)
+        });
+    };
+
+    const handleFeedbackChange = async (sessionId, value) => {
+        const sessionRef = doc(db, 'sessions', sessionId);
+        await updateDoc(sessionRef, {
+            feedback: value
+        });
+    };
+
+    const calculateTotalGrade = (grades) => {
+        if (!grades) return '0.0';
+        const totalPoints = (grades.level1 || 0) + (grades.level2 || 0) + (grades.level3 || 0) + (grades.level4 || 0);
+        const maxPoints = 12; // 4 levels * 3 points each
+        const finalGrade = (totalPoints / maxPoints) * 5.0;
+        return finalGrade.toFixed(1);
     };
 
     return (
@@ -48,23 +70,43 @@ function Dashboard() {
 
                         {expandedGroup === session.groupId && (
                             <div className="card-body">
-                                <p><strong>Topografía:</strong> {session.caseData.topografia}</p>
+                                <div className="case-details">
+                                    <p><strong>Topografía:</strong> {session.caseData.topografia}</p>
+                                    <p><strong>Descripción:</strong> {session.caseData.descripcion}</p>
+                                    <p><strong>Pista:</strong> {session.caseData.pista}</p>
+                                </div>
                                 <hr />
-                                <div className="response-group">
-                                    <h4>Nivel 1:</h4>
-                                    <p>{session.responses?.level1 || <span className="empty">Sin respuesta...</span>}</p>
-                                </div>
-                                <div className="response-group">
-                                    <h4>Nivel 2:</h4>
-                                    <p>{session.responses?.level2 || <span className="empty">Sin respuesta...</span>}</p>
-                                </div>
-                                <div className="response-group">
-                                    <h4>Nivel 3:</h4>
-                                    <p>{session.responses?.level3 || <span className="empty">Sin respuesta...</span>}</p>
-                                </div>
-                                <div className="response-group">
-                                    <h4>Nivel 4:</h4>
-                                    <p>{session.responses?.level4 || <span className="empty">Sin respuesta...</span>}</p>
+                                {[1, 2, 3, 4].map((levelNum) => (
+                                    <div key={levelNum} className="response-group">
+                                        <h4>Nivel {levelNum}:</h4>
+                                        <p>{session.responses?.[`level${levelNum}`] || <span className="empty">Sin respuesta...</span>}</p>
+                                        <div className="rubric-control">
+                                            <label>Calificación (0-3): </label>
+                                            <select 
+                                                value={session.grades?.[`level${levelNum}`] ?? ''} 
+                                                onChange={(e) => handleGradeChange(session.id, `level${levelNum}`, e.target.value)}
+                                            >
+                                                <option value="" disabled>Seleccione puntaje</option>
+                                                <option value="0">0 Puntos - Insuficiente</option>
+                                                <option value="1">1 Punto - Regular</option>
+                                                <option value="2">2 Puntos - Bueno</option>
+                                                <option value="3">3 Puntos - Excelente</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                <hr />
+                                <div className="feedback-section">
+                                    <div className="grade-display">
+                                        <h3>Nota Final: {calculateTotalGrade(session.grades)} / 5.0</h3>
+                                    </div>
+                                    <h4>Comentarios y Realimentación (Opcional):</h4>
+                                    <textarea 
+                                        placeholder="Escribe comentarios o feedback para el grupo..." 
+                                        value={session.feedback || ''}
+                                        onChange={(e) => handleFeedbackChange(session.id, e.target.value)}
+                                    />
                                 </div>
                             </div>
                         )}
